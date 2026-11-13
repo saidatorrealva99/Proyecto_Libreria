@@ -21,9 +21,14 @@
                         <p class="mb-0 opacity-75">Boletas y facturas emitidas por la librería</p>
                     </div>
                 </div>
-                <a href="{{ route('ventas.create') }}" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold text-primary shadow-sm">
-                    <i class="fas fa-plus-circle me-2"></i>Nueva Venta
-                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('pedidos-web.index') }}" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-semibold">
+                        <i class="fas fa-globe me-2"></i>Pedidos web
+                    </a>
+                    <a href="{{ route('ventas.create') }}" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold text-primary shadow-sm">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Venta
+                    </a>
+                </div>
             </div>
             <i class="fas fa-cash-register fa-6x opacity-25 position-absolute top-50 end-0 translate-middle-y me-5 d-none d-xl-block"></i>
         </div>
@@ -62,10 +67,21 @@
                         @foreach ($ventas as $venta)
                         <tr>
                             <td class="ps-4 text-muted">{{ ++$i }}</td>
-                            <td><span class="badge {{ $venta->tipo_comprobante === 'factura' ? 'bg-dark' : 'bg-primary' }} me-1">{{ ucfirst($venta->tipo_comprobante) }}</span><span class="font-monospace">{{ $venta->numero_comprobante }}</span></td>
+                            <td class="text-nowrap">
+                                @if ($venta->canal === 'web')
+                                    <span class="badge bg-info text-dark me-1" title="Pedido de la tienda web"><i class="fas fa-globe"></i></span>
+                                @endif
+                                <span class="badge {{ $venta->tipo_comprobante === 'factura' ? 'bg-dark' : 'bg-primary' }} me-1">{{ ucfirst($venta->tipo_comprobante) }}</span><span class="font-monospace">{{ $venta->numero_comprobante }}</span>
+                            </td>
                             <td class="small"><i class="far fa-calendar-alt text-muted me-1"></i>{{ $venta->fecha_venta ? \Illuminate\Support\Carbon::parse($venta->fecha_venta)->format('d/m/Y H:i') : '—' }}</td>
                             <td class="fw-semibold text-dark">{{ $venta->cliente?->nombres }} {{ $venta->cliente?->apellidos }}</td>
-                            <td>{{ $venta->empleado?->nombres }} {{ $venta->empleado?->apellidos }}</td>
+                            <td>
+                                @if ($venta->empleado)
+                                    {{ $venta->empleado->nombres }} {{ $venta->empleado->apellidos }}
+                                @else
+                                    <span class="text-muted small fst-italic">Sin asignar</span>
+                                @endif
+                            </td>
                             <td class="text-end">S/ {{ number_format($venta->subtotal, 2) }}</td>
                             <td class="text-end text-danger">{{ $venta->descuento > 0 ? '- S/ ' . number_format($venta->descuento, 2) : '—' }}</td>
                             <td class="text-end fw-bold text-dark">S/ {{ number_format($venta->total, 2) }}</td>
@@ -77,11 +93,25 @@
                                     ];
                                     [$color, $icono] = $estados[$venta->estado] ?? ['bg-secondary', 'fa-question'];
                                 @endphp
-                                <span class="badge rounded-pill {{ $color }}"><i class="fas {{ $icono }} me-1"></i>{{ ucfirst($venta->estado) }}</span></td>
+                                <span class="badge rounded-pill {{ $color }}"><i class="fas {{ $icono }} me-1"></i>{{ ucfirst($venta->estado) }}</span>
+                                @if ($venta->canal === 'web' && $venta->estado_pedido)
+                                    @php [$textoPedido, $colorPedido] = \App\Models\Venta::ESTADOS_PEDIDO[$venta->estado_pedido]; @endphp
+                                    <div class="small text-{{ $colorPedido }}-emphasis mt-1">{{ $textoPedido }}</div>
+                                @endif
+                            </td>
                             <td class="text-end pe-4">
                                 <form action="{{ route('ventas.destroy', $venta->id) }}" method="POST" class="d-inline-flex gap-1">
-                                    <a href="{{ route('ventas.show', $venta->id) }}" class="btn btn-sm btn-outline-info rounded-circle" title="Ver detalle">
-                                        <i class="fas fa-eye fa-fw"></i>
+                                    @if ($venta->canal === 'web')
+                                        <a href="{{ route('pedidos-web.show', $venta->id) }}" class="btn btn-sm btn-outline-info rounded-circle" title="Atender pedido web">
+                                            <i class="fas fa-globe fa-fw"></i>
+                                        </a>
+                                    @else
+                                        <a href="{{ route('ventas.show', $venta->id) }}" class="btn btn-sm btn-outline-info rounded-circle" title="Ver detalle">
+                                            <i class="fas fa-eye fa-fw"></i>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('comprobante.pdf', $venta->numero_comprobante) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-circle" title="Comprobante PDF">
+                                        <i class="fas fa-file-pdf fa-fw"></i>
                                     </a>
                                     <a href="{{ route('ventas.edit', $venta->id) }}" class="btn btn-sm btn-outline-success rounded-circle" title="Editar">
                                         <i class="fas fa-pen fa-fw"></i>

@@ -15,6 +15,7 @@ class Producto extends Model
         'codigo',
         'nombre',
         'descripcion',
+        'imagen',
         'categoria_id',
         'autor_id',
         'isbn',
@@ -24,6 +25,18 @@ class Producto extends Model
         'stock_minimo',
         'estado',
     ];
+
+    // URL pública de la foto (o null si no tiene)
+    public function getUrlImagenAttribute(): ?string
+    {
+        return $this->imagen ? asset('storage/' . $this->imagen) : null;
+    }
+
+    // Nombre con el que se guarda la foto: código + nombre, ej. lib-0001-cien-anos-de-soledad
+    public static function nombreArchivo(string $codigo, string $nombre): string
+    {
+        return \Illuminate\Support\Str::slug($codigo . ' ' . $nombre);
+    }
 
     // Un producto pertenece a una categoría
     public function categoria()

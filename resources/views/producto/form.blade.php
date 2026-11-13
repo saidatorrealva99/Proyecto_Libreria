@@ -47,6 +47,36 @@
                        value="{{ old('descripcion', $producto?->descripcion) }}" maxlength="255" placeholder="Opcional">
                 @error('descripcion')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
+            <div class="col-12">
+                <div class="d-flex flex-wrap align-items-center gap-4 bg-white border border-primary-subtle rounded-4 p-3">
+                    <div class="text-center">
+                        @if ($producto?->imagen)
+                            <img src="{{ $producto->url_imagen }}" alt="{{ $producto->nombre }}" id="vistaFoto" width="110" height="150" class="rounded-3 shadow-sm object-fit-cover border">
+                        @else
+                            <img src="" alt="" id="vistaFoto" width="110" height="150" class="rounded-3 shadow-sm object-fit-cover border d-none">
+                            <div id="sinFoto" class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center px-4 py-5">
+                                <i class="fas fa-image fa-2x"></i>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="flex-grow-1">
+                        <label for="imagen" class="form-label fw-bold text-dark"><i class="fas fa-camera fa-fw text-primary me-1"></i>Foto o portada</label>
+                        <input type="file" name="imagen" id="imagen" accept=".jpg,.jpeg,.png,.webp"
+                               class="form-control form-control-lg @error('imagen') is-invalid @enderror">
+                        @error('imagen')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="small text-muted mt-2">
+                            <i class="fas fa-circle-info me-1"></i>JPG, PNG o WEBP, máximo 2 MB. Se guardará como:
+                            <code id="nombreArchivo" class="fw-bold">—</code>
+                        </div>
+                        @if ($producto?->imagen)
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="quitar_imagen" value="1" id="quitar_imagen">
+                                <label class="form-check-label small text-danger" for="quitar_imagen">Quitar la foto actual</label>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
             <div class="col-md-6">
                 <label for="categoria_id" class="form-label fw-bold text-dark"><i class="fas fa-tags fa-fw text-primary me-1"></i>Categoría <span class="text-danger">*</span></label>
                 <select name="categoria_id" id="categoria_id" class="form-select form-select-lg @error('categoria_id') is-invalid @enderror">
@@ -124,6 +154,39 @@
         </button>
     </div>
 </div>
+
+<script>
+    (function () {
+        // Muestra el nombre con el que se guardará la foto: codigo-nombre (sin tildes ni espacios)
+        const codigo = document.getElementById('codigo');
+        const nombre = document.getElementById('nombre');
+        const salida = document.getElementById('nombreArchivo');
+        const archivo = document.getElementById('imagen');
+        function slug(texto) {
+            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        }
+        function actualizar() {
+            const ext = archivo.files.length ? archivo.files[0].name.split('.').pop().toLowerCase() : 'jpg';
+            const base = slug(codigo.value + ' ' + nombre.value);
+            salida.textContent = base ? base + '.' + ext : '—';
+        }
+        codigo.addEventListener('input', actualizar);
+        nombre.addEventListener('input', actualizar);
+
+        // Vista previa de la foto elegida
+        archivo.addEventListener('change', function () {
+            actualizar();
+            if (!this.files.length) return;
+            const vista = document.getElementById('vistaFoto');
+            vista.src = URL.createObjectURL(this.files[0]);
+            vista.classList.remove('d-none');
+            const sin = document.getElementById('sinFoto');
+            if (sin) sin.classList.add('d-none');
+        });
+        actualizar();
+    })();
+</script>
 
 <script>
     // Punto de color según el estado seleccionado

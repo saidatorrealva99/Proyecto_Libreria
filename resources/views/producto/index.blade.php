@@ -63,8 +63,8 @@
                         <tr>
                             <td class="ps-4 text-muted">{{ ++$i }}</td>
                             <td><span class="badge bg-light text-dark border font-monospace">{{ $producto->codigo }}</span></td>
-                            <td><div class="fw-semibold text-dark">{{ $producto->nombre }}</div>
-                                @if ($producto->isbn)<small class="text-muted"><i class="fas fa-barcode me-1"></i>ISBN {{ $producto->isbn }}</small>@endif</td>
+                            <td><div class="d-flex align-items-center gap-3">@if ($producto->imagen)<img src="{{ $producto->url_imagen }}" alt="{{ $producto->nombre }}" width="42" height="58" class="rounded-2 shadow-sm object-fit-cover border">@else<span class="bg-primary-subtle text-primary rounded-2 d-inline-flex align-items-center justify-content-center px-2 py-3"><i class="fas {{ $producto->autor_id ? 'fa-book' : 'fa-pencil-ruler' }} fa-fw"></i></span>@endif<div><div class="fw-semibold text-dark">{{ $producto->nombre }}</div>
+                                @if ($producto->isbn)<small class="text-muted"><i class="fas fa-barcode me-1"></i>ISBN {{ $producto->isbn }}</small>@endif</div></div></td>
                             <td><span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">{{ $producto->categoria?->nombre ?? '—' }}</span></td>
                             <td>@if ($producto->autor)<i class="fas fa-feather-alt text-muted me-1"></i>{{ $producto->autor->nombres }} {{ $producto->autor->apellidos }}@else<span class="text-muted">—</span>@endif</td>
                             <td>{{ $producto->marca_editorial ?? '—' }}</td>

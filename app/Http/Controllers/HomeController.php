@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AnularPedidosVencidos;
 use App\Models\Autore;
 use App\Models\Categoria;
 use App\Models\Cliente;
@@ -19,6 +20,9 @@ class HomeController extends Controller
      */
     public function index(): Renderable
     {
+        // Anula los pedidos web que vencieron sin pago (devuelve el stock)
+        AnularPedidosVencidos::revisar();
+
         // ---------- Tarjetas de resumen (KPI) ----------
         $totalProductos  = Producto::count();
         $totalClientes   = Cliente::count();
@@ -67,6 +71,7 @@ class HomeController extends Controller
         // ---------- Mejores vendedores ----------
         $topVendedores = Venta::selectRaw('empleado_id, COUNT(*) AS ventas, SUM(total) AS monto')
             ->where('estado', '!=', 'anulada')
+            ->whereNotNull('empleado_id')            // los pedidos web sin atender aún no tienen vendedor
             ->groupBy('empleado_id')
             ->orderByDesc('monto')
             ->with('empleado')
@@ -79,7 +84,20 @@ class HomeController extends Controller
             ->take(5)
             ->get();
 
+        // ---------- Pedidos de la tienda web ----------
+        $pedidosWeb = Venta::where('canal', 'web')
+            ->selectRaw('estado_pedido, COUNT(*) AS cantidad')
+            ->groupBy('estado_pedido')
+            ->pluck('cantidad', 'estado_pedido');
+
+        $ultimosPorConfirmar = Venta::with('cliente')
+            ->where('estado_pedido', 'por_confirmar')
+            ->oldest('fecha_venta')
+            ->take(3)
+            ->get();
+
         return view('home', compact(
+            'pedidosWeb', 'ultimosPorConfirmar',
             'totalProductos', 'totalClientes', 'totalAutores', 'totalCategorias',
             'ingresosTotales', 'cantidadVentas', 'ticketPromedio', 'ventasMes',
             'stockBajo', 'unidadesEnStock', 'masVendido', 'novedades',

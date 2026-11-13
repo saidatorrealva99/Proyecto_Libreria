@@ -33,6 +33,16 @@
         {{-- ========== DATOS ========== --}}
         <div class="card-body bg-light p-4">
             <div class="row g-2">
+                <div class="col-md-3">
+                    <div class="bg-white border border-primary-subtle rounded-3 shadow-sm p-2 h-100 d-flex align-items-center justify-content-center">
+                        @if ($producto->imagen)
+                            <img src="{{ $producto->url_imagen }}" alt="{{ $producto->nombre }}" class="img-fluid rounded-2">
+                        @else
+                            <div class="text-center text-primary py-4"><i class="fas fa-image fa-3x mb-2"></i><div class="small text-muted">Sin foto</div></div>
+                        @endif
+                    </div>
+                </div>
+                <div class="col-md-9"><div class="row g-2">
                 <div class="col-md-4">
                     <div class="bg-white border border-primary-subtle rounded-3 shadow-sm px-3 py-2 h-100">
                         <small class="text-uppercase text-secondary fw-bold d-block small"><i class="fas fa-barcode fa-fw text-primary me-1"></i>Código</small>
@@ -51,6 +61,7 @@
                         <div class="fw-semibold text-dark">{{ $producto->descripcion ?? '—' }}</div>
                     </div>
                 </div>
+                </div></div>
                 <div class="col-md-6">
                     <div class="bg-white border border-primary-subtle rounded-3 shadow-sm px-3 py-2 h-100">
                         <small class="text-uppercase text-secondary fw-bold d-block small"><i class="fas fa-tags fa-fw text-primary me-1"></i>Categoría</small>

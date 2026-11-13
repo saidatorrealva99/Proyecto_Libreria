@@ -21,6 +21,8 @@ class ProductoRequest extends FormRequest
                                   Rule::unique('productos', 'codigo')->ignore($producto)],
             'nombre'          => ['required', 'string', 'max:150'],
             'descripcion'     => ['nullable', 'string', 'max:255'],
+            'imagen'          => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],   // hasta 2 MB
+            'quitar_imagen'   => ['nullable', 'boolean'],
             'categoria_id'    => ['required', 'integer', 'exists:categorias,id'],
             'autor_id'        => ['nullable', 'integer', 'exists:autores,id'],
             'isbn'            => ['nullable', 'string', 'max:17', 'regex:/^97[89][0-9-]{10,14}$/',
@@ -38,6 +40,9 @@ class ProductoRequest extends FormRequest
         return [
             'codigo.regex' => 'El código debe tener el formato AAA-0000 (ej: LIB-0001).',
             'isbn.regex'   => 'El ISBN debe empezar con 978 o 979 (ej: 978-6124215037).',
+            'imagen.image' => 'El archivo debe ser una imagen.',
+            'imagen.mimes' => 'La foto debe ser JPG, PNG o WEBP.',
+            'imagen.max'   => 'La foto no puede pesar más de 2 MB.',
         ];
     }
 }

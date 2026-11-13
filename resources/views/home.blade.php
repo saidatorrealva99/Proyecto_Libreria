@@ -38,6 +38,68 @@
     </div>
 
     {{-- =====================================================================
+         PEDIDOS DE LA TIENDA WEB
+    ====================================================================== --}}
+    @php
+        $porConfirmar = $pedidosWeb['por_confirmar'] ?? 0;
+        $resumenWeb = [
+            'por_confirmar' => ['Por confirmar',      'warning', 'fa-hourglass-half'],
+            'confirmado'    => ['Por preparar',       'primary', 'fa-box'],
+            'listo_recojo'  => ['Listos para recoger', 'info',   'fa-store'],
+            'en_camino'     => ['En camino',          'info',    'fa-truck-fast'],
+        ];
+    @endphp
+    <div class="card border-0 shadow-sm rounded-4 mb-4 {{ $porConfirmar > 0 ? 'border-start border-warning border-5' : '' }}">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-globe text-info me-2 {{ $porConfirmar > 0 ? 'fa-beat-fade' : '' }}"></i>Pedidos de la tienda web
+                    @if ($porConfirmar > 0)
+                        <span class="badge bg-danger rounded-pill ms-1">{{ $porConfirmar }} nuevo{{ $porConfirmar > 1 ? 's' : '' }}</span>
+                    @endif
+                </h5>
+                <a href="{{ route('pedidos-web.index') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+                    Ver todos<i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+
+            <div class="row g-3">
+                @foreach ($resumenWeb as $clave => [$texto, $color, $icono])
+                    <div class="col-6 col-lg-3">
+                        <a href="{{ route('pedidos-web.index', ['estado' => $clave]) }}" class="text-decoration-none">
+                            <div class="bg-{{ $color }}-subtle border border-{{ $color }}-subtle rounded-4 p-3 h-100 d-flex align-items-center gap-3">
+                                <i class="fas {{ $icono }} fa-2x fa-fw text-{{ $color }}-emphasis"></i>
+                                <div>
+                                    <div class="fs-3 fw-bold text-{{ $color }}-emphasis lh-1">{{ $pedidosWeb[$clave] ?? 0 }}</div>
+                                    <small class="text-{{ $color }}-emphasis">{{ $texto }}</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+
+            @if ($ultimosPorConfirmar->isNotEmpty())
+                <div class="list-group list-group-flush mt-3">
+                    @foreach ($ultimosPorConfirmar as $p)
+                        <a href="{{ route('pedidos-web.show', $p->id) }}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2 px-0">
+                            <span>
+                                <i class="fas fa-hourglass-half text-warning me-2"></i>
+                                <span class="font-monospace fw-semibold">{{ $p->numero_comprobante }}</span>
+                                · {{ $p->cliente?->nombres }} {{ $p->cliente?->apellidos }}
+                                <small class="text-muted ms-1">{{ $p->fecha_venta?->diffForHumans() }}</small>
+                            </span>
+                            <span class="fw-bold">S/ {{ number_format($p->total, 2) }}
+                                <span class="btn btn-warning btn-sm rounded-pill px-3 ms-2 fw-semibold">Atender</span>
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- =====================================================================
          2. CARRUSEL PRINCIPAL (se mueve solo cada 5 segundos)
     ====================================================================== --}}
     <div id="carruselPrincipal" class="carousel slide carousel-fade shadow rounded-4 overflow-hidden mb-4" data-bs-ride="carousel" data-bs-interval="5000">
@@ -369,7 +431,7 @@
                                 <span class="fw-bold">S/ {{ number_format($m->total, 2) }} <span class="text-muted fw-normal">· {{ $porcentaje }}%</span></span>
                             </div>
                             <div class="progress rounded-pill" role="progressbar" aria-valuenow="{{ $porcentaje }}" aria-valuemin="0" aria-valuemax="100">
-                                <div class="progress-bar {{ $color }} progress-bar-striped progress-bar-animated" style="width: {{ $porcentaje }}%"></div>
+                                <div class="progress-bar {{ $color }} progress-bar-striped progress-bar-animated" data-ancho="{{ $porcentaje }}"></div>
                             </div>
                         </div>
                     @empty
@@ -415,7 +477,7 @@
                                 <span class="badge bg-danger">{{ $p->stock }} / {{ $p->stock_minimo }}</span>
                             </div>
                             <div class="progress rounded-pill">
-                                <div class="progress-bar bg-danger" style="width: {{ $nivel }}%"></div>
+                                <div class="progress-bar bg-danger" data-ancho="{{ $nivel }}"></div>
                             </div>
                         </div>
                     @empty

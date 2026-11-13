@@ -22,9 +22,9 @@
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Scripts (paso 38: se comenta para no cargar Bootstrap dos veces)
+    {{-- Scripts (paso 38: se comenta para no cargar Bootstrap dos veces)
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
-    -->
+    --}}
 </head>
 
 <body class="bg-light">
@@ -35,7 +35,7 @@
             <div class="container">
 
                 <!-- Enlace de Inicio / Panel de Control -->
-                <a class="navbar-brand fw-bold px-3 py-1 rounded-pill {{ request()->routeIs('home') ? 'bg-primary text-white shadow-sm' : 'text-primary' }}" href="{{ Auth::check() ? route('home') : url('/') }}">
+                <a class="navbar-brand fw-bold px-3 py-1 rounded-pill {{ request()->routeIs('home') ? 'bg-primary text-white shadow-sm' : 'text-primary' }}" href="{{ Auth::check() ? (Auth::user()->esPersonal() ? route('home') : route('mi-cuenta')) : url('/') }}">
                     <i class="fas fa-home me-1"></i>{{ __('Inicio') }}
                 </a>
 
@@ -47,6 +47,7 @@
                     <!-- Menú del sistema (solo con sesión iniciada) -->
                     <ul class="navbar-nav me-auto">
                         @auth
+                        @if (Auth::user()->esPersonal())
                         <!-- Catálogos -->
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('productos.*') ? 'active fw-semibold' : '' }}" href="{{ route('productos.index') }}">
@@ -75,6 +76,24 @@
                         </li>
 
                         <!-- Procesos -->
+                        @php $pedidosPorConfirmar = \App\Models\Venta::where('estado_pedido', 'por_confirmar')->count(); @endphp
+                        <li class="nav-item">
+                            <a class="nav-link position-relative {{ request()->routeIs('pedidos-web.*') ? 'active fw-semibold' : '' }}" href="{{ route('pedidos-web.index') }}">
+                                <i class="fas fa-globe me-1"></i>{{ __('Pedidos web') }}
+                                @if ($pedidosPorConfirmar > 0)
+                                    <span class="badge rounded-pill bg-danger ms-1" title="Pedidos esperando confirmación de pago">{{ $pedidosPorConfirmar }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @php $reclamosPendientes = \App\Models\Reclamacion::where('estado', 'pendiente')->count(); @endphp
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('reclamos.*') ? 'active fw-semibold' : '' }}" href="{{ route('reclamos.index') }}">
+                                <i class="fas fa-book me-1"></i>{{ __('Reclamos') }}
+                                @if ($reclamosPendientes > 0)
+                                    <span class="badge rounded-pill bg-danger ms-1" title="Reclamos por responder">{{ $reclamosPendientes }}</span>
+                                @endif
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('ventas.*') ? 'active fw-semibold' : '' }}" href="{{ route('ventas.index') }}">
                                 <i class="fas fa-cash-register me-1"></i>{{ __('Ventas') }}
@@ -90,6 +109,19 @@
                                 <i class="fas fa-credit-card me-1"></i>{{ __('Pagos') }}
                             </a>
                         </li>
+                        @else
+                        <!-- Menú del CLIENTE -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url('/') }}#catalogo">
+                                <i class="fas fa-store me-1"></i>{{ __('Tienda') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('mi-cuenta') ? 'active fw-semibold' : '' }}" href="{{ route('mi-cuenta') }}">
+                                <i class="fas fa-user me-1"></i>{{ __('Mi cuenta') }}
+                            </a>
+                        </li>
+                        @endif
                         @endauth
                     </ul>
 
@@ -121,6 +153,16 @@
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2" aria-labelledby="navbarDropdown">
+                                    <span class="dropdown-item-text small text-muted">
+                                        Rol:
+                                        @php $colorRol = ['admin' => 'danger', 'empleado' => 'primary', 'cliente' => 'success'][Auth::user()->rol] ?? 'secondary'; @endphp
+                                        <span class="badge rounded-pill bg-{{ $colorRol }}-subtle text-{{ $colorRol }}-emphasis">{{ ucfirst(Auth::user()->rol) }}</span>
+                                    </span>
+                                    <a class="dropdown-item py-2" href="{{ url('/') }}"><i class="fas fa-store me-2"></i>Ver la tienda</a>
+                                    @unless (Auth::user()->esPersonal())
+                                        <a class="dropdown-item py-2" href="{{ route('mi-cuenta') }}"><i class="fas fa-user me-2"></i>Mi cuenta</a>
+                                    @endunless
+                                    <div class="dropdown-divider"></div>
                                     <a class="dropdown-item py-2 text-danger" href="{{ route('logout') }}"
                                         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                         <i class="fas fa-sign-out-alt me-2"></i>{{ __('Cerrar sesión') }}
@@ -139,6 +181,20 @@
 
         <!-- ===================== CONTENIDO ===================== -->
         <main class="py-4 flex-grow-1">
+            @if (session('aviso'))
+                <div class="container">
+                    <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm">
+                        <i class="fas fa-triangle-exclamation"></i><span>{{ session('aviso') }}</span>
+                    </div>
+                </div>
+            @endif
+            @if (session('carrito_ok'))
+                <div class="container">
+                    <div class="alert alert-success d-flex align-items-center gap-2 shadow-sm">
+                        <i class="fas fa-circle-check"></i><span>{{ session('carrito_ok') }}</span>
+                    </div>
+                </div>
+            @endif
             @yield('content')
         </main>
 
@@ -252,6 +308,13 @@
                     paginate: { first: '«', previous: '‹', next: '›', last: '»' }
                 }
             });
+        });
+    </script>
+
+    <script>
+        // Ancho de las barras de progreso: <div class="progress-bar" data-ancho="75">
+        document.querySelectorAll('[data-ancho]').forEach(function (barra) {
+            barra.style.width = Math.min(100, Math.max(0, parseFloat(barra.dataset.ancho) || 0)) + '%';
         });
     </script>
 

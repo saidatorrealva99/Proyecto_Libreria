@@ -12,6 +12,7 @@ class Cliente extends Model
 
     // Campos que se pueden guardar desde los formularios
     protected $fillable = [
+        'user_id',
         'tipo_documento',
         'numero_documento',
         'nombres',
@@ -20,6 +21,12 @@ class Cliente extends Model
         'telefono',
         'direccion',
     ];
+
+    // Cuenta web del cliente (puede ser NULL: clientes atendidos en tienda)
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', 'id');
+    }
 
     // Un cliente tiene muchas compras
     public function ventas()

@@ -40,10 +40,16 @@ class VentaRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                // total = subtotal - descuento
-                $esperado = round((float) $this->input('subtotal') - (float) $this->input('descuento'), 2);
+                // total = subtotal - descuento + envío
+                // (el envío solo existe en pedidos web; si el formulario no lo trae, se usa el de la venta)
+                $venta = $this->route('venta');
+                $envio = $this->has('costo_envio')
+                    ? (float) $this->input('costo_envio')
+                    : (float) ($venta instanceof \App\Models\Venta ? $venta->costo_envio : 0);
+                $esperado = round((float) $this->input('subtotal') - (float) $this->input('descuento') + $envio, 2);
                 if (abs($esperado - (float) $this->input('total')) > 0.001) {
-                    $validator->errors()->add('total', "El total debe ser subtotal - descuento = {$esperado}.");
+                    $texto = $envio > 0 ? "subtotal - descuento + envío (S/ {$envio})" : 'subtotal - descuento';
+                    $validator->errors()->add('total', "El total debe ser {$texto} = {$esperado}.");
                 }
 
                 // Una factura solo se emite a un cliente con RUC
